@@ -75,3 +75,40 @@ class Renderer:
                 finished = self.__rendered_tiles.qsize()
                 print("{0}/{1} tiles | {2:.2f}%".format(finished, self.__total_tiles,
                                                         finished / self.__total_tiles * 100.0))
+    def __render_portion_gpu(self, tracer, scene, camera, width, height, super_sampling):
+        """Worker method rendering a portion/tile of the image"""
+        while True:
+            next_work = self.__tiles.get()
+            if next_work is None:
+                break
+            start_x, start_y, end_x, end_y = next_work
+            """
+            : TODO: Implement with GPU
+            """
+
+            # Get Ray array
+
+            # Tracer for Ray array with Scene
+
+            rendered_tile = {}
+            for y in range(start_y, min(end_y, height)):
+                for x in range(start_x, min(end_x, width)):
+                    sum_color = Vector3()
+                    sampled_rays = 0
+                    for ss_x in range(-super_sampling + 1, super_sampling):
+                        for ss_y in range(-super_sampling + 1, super_sampling):
+                            ray = camera.calcRay(x + ss_x, y + ss_y, width, height)
+                            sum_color += tracer.trace(ray, scene)
+                            sampled_rays += 1
+                    rendered_tile[x, y] = sum_color * (1 / sampled_rays)
+
+            """
+            :
+            """
+
+
+            self.__rendered_tiles.put((rendered_tile,))
+            if self.__logging:
+                finished = self.__rendered_tiles.qsize()
+                print("{0}/{1} tiles | {2:.2f}%".format(finished, self.__total_tiles,
+                                                        finished / self.__total_tiles * 100.0))

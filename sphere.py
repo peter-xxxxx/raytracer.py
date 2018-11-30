@@ -14,6 +14,11 @@ class Sphere:
         """Returns the position of the sphere"""
         return self.__position
 
+    @property
+    def radius(self):
+        """Returns the position of the sphere"""
+        return self.__radius
+
     def intersect(self, ray):
         """Returns the intersection of a ray with this sphere"""
         # http://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection
