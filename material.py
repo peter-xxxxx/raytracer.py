@@ -29,6 +29,11 @@ class Material:
         return self.__transparency
 
     @property
+    def reflectivity(self):
+        """Returns the reflectivity of the material"""
+        self.__reflectivity
+
+    @property
     def is_diffuse(self):
         """Returns whether the material is diffuse"""
         return self.__reflectivity == 0.0 and self.__transparency == 0.0

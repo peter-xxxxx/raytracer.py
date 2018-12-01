@@ -91,19 +91,23 @@ class Renderer:
             # Tracer for Ray array with Scene
 
             rendered_tile = {}
+            ray_array = []
             for y in range(start_y, min(end_y, height)):
                 for x in range(start_x, min(end_x, width)):
                     sum_color = Vector3()
-                    sampled_rays = 0
-                    for ss_x in range(-super_sampling + 1, super_sampling):
-                        for ss_y in range(-super_sampling + 1, super_sampling):
-                            ray = camera.calcRay(x + ss_x, y + ss_y, width, height)
-                            sum_color += tracer.trace(ray, scene)
-                            sampled_rays += 1
-                    rendered_tile[x, y] = sum_color * (1 / sampled_rays)
+                    # sampled_rays = 0
+                    ray = camera.calcRay(x, y, width, height)
+                    ray_array.append([ray.origin, ray.direction, ray.current_ior])
+                    # for ss_x in range(-super_sampling + 1, super_sampling):
+                    #     for ss_y in range(-super_sampling + 1, super_sampling):
+                    #         ray = camera.calcRay(x + ss_x, y + ss_y, width, height)
+                    #         sum_color += tracer.trace(ray, scene)
+                    #         sampled_rays += 1
+                    # rendered_tile[x, y] = sum_color * (1 / sampled_rays)
 
+            rendered_tile = tracer.trace(ray_array, scene)
             """
-            :
+            :# TODO:
             """
 
 

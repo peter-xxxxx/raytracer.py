@@ -1,8 +1,11 @@
 from ray import Ray
 from vector3 import Vector3
+import numpy as np
+from pycuda import driver, compiler, gpuarray, tools
 
+import pycuda.autoinit
 
-class Tracer:
+class Tracer_gpu:
     """Main (ray) tracer coordinating the heavy algorithmic work"""
 
     def __init__(self, max_recursion_depth=5, bias=1e-4):
@@ -10,10 +13,61 @@ class Tracer:
         self.__max_recursion_depth = max_recursion_depth
         self.__bias = bias
 
-    def trace(self, ray, scene):
+        """
+        # TODO:
+        """
+
+    def trace(self, ray_array, scene):
         """Traces a ray through a scene to return the traced color"""
         self.__scene = scene
-        return self.__trace_recursively(ray, 0)
+        self.__scene_gpu = self.__scene_to_gpu(scene)
+        return self.__trace_gpu(ray_array, 0)
+
+    def __scene_to_gpu(self, scene):
+        scene_gpu = []
+        for obj in scene:
+            primitive = obj.primitive
+            primitive_type = 0
+            primitive_position = primitive.position
+            primitive_radius = primitive.radius
+            material = obj.material
+            material_surface_color = material.surface_color
+            material_emission_color = material.emission_color
+            material_reflectivity = material.reflectivity
+            material_transparency = material.transparency
+            material_ior = material.ior
+            material_is_diffuse = material.is_diffuse
+            is_light = obj.is_light
+
+            scene_gpu.append([primitive,
+                              primitive_type,
+                              primitive_position,
+                              primitive_radius,
+                              material,
+                              material_surface_color,
+                              material_emission_color,
+                              material_reflectivity,
+                              material_transparency,
+                              material_ior,
+                              material_is_diffuse,
+                              is_light])
+
+        return scene_gpu
+
+    def __trace_gpu(ray_array):
+        """
+        : # TODO:
+
+        recursive -> iterative
+
+        every depth, call gpu func
+
+
+        """
+
+        while depth <= self.__max_recursion_depth:
+            self.trace_func(ray_array_gpu, output_ray)
+
 
     def __trace_recursively(self, ray, depth):
         """Traces a ray through a scene recursively"""
@@ -31,6 +85,22 @@ class Tracer:
         """Returns the (nearest) intersection of the ray"""
         hit_object = None
         hit_t, hit_point, hit_normal = float("inf"), None, None
+        for obj in self.__scene:
+            intersection = obj.primitive.intersect(ray)
+            if intersection and intersection[0] < hit_t:
+                hit_object = obj
+                hit_t, hit_point, hit_normal = intersection
+        return hit_object, hit_point, hit_normal
+
+    def __intersect_gpu(self, ray):
+        """Returns the (nearest) intersection of the ray"""
+        hit_object = None
+        hit_t, hit_point, hit_normal = float("inf"), None, None
+
+        """
+        scene -> obj array for gpu
+        """
+
         for obj in self.__scene:
             intersection = obj.primitive.intersect(ray)
             if intersection and intersection[0] < hit_t:
