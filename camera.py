@@ -9,8 +9,10 @@ class Camera:
     def __init__(self, position, fov):
         """Creates a new camera"""
         self.__position = position
-        self.__fov = fov
+        self.__fov = fov # Field of View
 
+    # every ray starts at the original point of the camera, goes
+    # to the project image plane
     def calcRay(self, x, y, width, height):
         """Calculates the ray (to be traced) at image position"""
         aspect_ratio = width / height
