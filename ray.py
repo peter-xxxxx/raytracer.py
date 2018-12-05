@@ -20,4 +20,5 @@ class Ray:
     @property
     def current_ior(self):
         """Returns the current index of refraction of the ray"""
+        """For a ray in vacuum the ior is 1, the constant n in physics"""
         return self.__current_ior

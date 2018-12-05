@@ -61,11 +61,15 @@ class Tracer:
         inside = ray.direction.dot(hit_normal) > 0
         if inside:
             hit_normal = -hit_normal
+        # corret the normal vector in case it points inside of the sphere
+
         facing_ratio = -ray.direction.dot(hit_normal)
         fresnel = self.__mix((1 - facing_ratio) ** 2, 1, 0.1)
         reflection_ray = Ray(hit_point + self.__bias * hit_normal,
                              ray.direction.reflect(hit_normal).normalize())
         reflection = self.__trace_recursively(reflection_ray, depth + 1)
+
+
         refraction = Vector3()
 
         # transparent?
