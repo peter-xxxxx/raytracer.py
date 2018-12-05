@@ -1,8 +1,7 @@
 import os
 import threading
-from Queue import Queue
+from queue import Queue
 from tracer import Tracer
-from tracer_gpu import Tracer_gpu
 from vector3 import Vector3
 
 
