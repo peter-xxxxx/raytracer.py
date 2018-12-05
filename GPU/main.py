@@ -2,7 +2,7 @@
 from camera import Camera
 from material import Material
 from sphere import Sphere
-from renderer import Renderer
+from renderer_gpu import Renderer
 from renderobject import RenderObject
 from vector3 import Vector3
 
