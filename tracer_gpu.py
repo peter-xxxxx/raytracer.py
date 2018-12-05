@@ -70,6 +70,7 @@ class Tracer_gpu:
             int scene_index;
             int flag;
             int current_obj_i = -1;
+
             float l1, l2, l3;
             float t_ca;
             float d_squared;
@@ -111,7 +112,7 @@ class Tracer_gpu:
                     hit_normal1 = hit_point1 + scene[scene_index+1];
                     hit_normal2 = hit_point2 + scene[scene_index+2];
                     hit_normal3 = hit_point3 + scene[scene_index+3];
-                    normalize_vector(&hit_normal1, &hit_normal2, &hit_normal3)
+                    normalize_vector(&hit_normal1, &hit_normal2, &hit_normal3);
 
                     /* intersect python code
                     l = self.__position - ray.origin
@@ -148,7 +149,7 @@ class Tracer_gpu:
             *hit_obj_index = current_obj_i;
         }
 
-        __global__ void traceGPU(){
+        __global__ void traceGPU(float *ray_array, float *scene){
 
         }
 
@@ -159,14 +160,25 @@ class Tracer_gpu:
         """
         # TODO:
         """
+        # get the kernel function from the compiled module
 
-    def trace(self, ray_array, scene):
+        self.mod = compiler.SourceModule(kernel_code)
+
+
+        self.kernel_traceGPU = self.mod.get_function("traceGPU")
+
+
+
+
+    def trace(self, ray_array, ray_from_array, scene):
         """Traces a ray through a scene to return the traced color"""
         self.__scene = scene
-        self.__scene_gpu = self.__scene_to_gpu(scene)
-        return self.__trace_gpu(ray_array, 0)
+        self.__ray_from_array = ray_from_array
+        self.__scene_gpu = self.scene_to_gpu(scene)
+        print self.__scene_gpu
+        return self.trace_gpu(ray_array)
 
-    def __scene_to_gpu(self, scene):
+    def scene_to_gpu(self, scene):
         scene_gpu = []
         for obj in scene:
             primitive = obj.primitive
@@ -194,10 +206,11 @@ class Tracer_gpu:
                               material_ior,
                               material_is_diffuse,
                               is_light])
-
+                              # 0, Vector3(-4, -1, 20), 2,
+                              # Vector3(0.8, 0.8, 1), Vector3(0, 0, 0), 0.0, 0.8, 1.0, False, False
         return scene_gpu
 
-    def __trace_gpu(ray_array):
+    def trace_gpu(self, ray_array):
         """
         : # TODO:
 
@@ -207,6 +220,8 @@ class Tracer_gpu:
 
 
         """
+
+        self.kernel_traceGPU
 
         while depth <= self.__max_recursion_depth:
             self.trace_func(ray_array_gpu, output_ray)

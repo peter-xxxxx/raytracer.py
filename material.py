@@ -31,7 +31,7 @@ class Material:
     @property
     def reflectivity(self):
         """Returns the reflectivity of the material"""
-        self.__reflectivity
+        return self.__reflectivity
 
     @property
     def is_diffuse(self):

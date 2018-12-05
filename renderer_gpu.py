@@ -2,10 +2,11 @@ import os
 import threading
 from Queue import Queue
 from tracer import Tracer
+from tracer_gpu import Tracer_gpu
 from vector3 import Vector3
 
 
-class Renderer:
+class Renderer_gpu:
     """Renderer coordinating the tracing process"""
 
     def __init__(self, tilesize=32, threads=2):
@@ -15,7 +16,7 @@ class Renderer:
 
     def render(self, scene, camera, width, height, super_sampling=1, logging=True):
         """Renders a scene"""
-        tracer = Tracer()
+        tracer = Tracer_gpu()
         self.__tiles = Queue()
         self.__rendered_tiles = Queue()
         self.__logging = logging
@@ -25,7 +26,7 @@ class Renderer:
             print("render using {0} threads with {1}x{1} tiles".format(self.__threads, self.__tilesize))
         workers = []
         for i in range(self.__threads):
-            thread = threading.Thread(target=self.__render_portion,
+            thread = threading.Thread(target=self.__render_portion_gpu,
                                       args=(tracer, scene, camera, width, height, super_sampling))
             thread.start()
             workers.append(thread)
