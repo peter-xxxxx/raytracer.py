@@ -1,3 +1,4 @@
+# GPU Version
 class RenderObject:
     """Renderable object"""
 
