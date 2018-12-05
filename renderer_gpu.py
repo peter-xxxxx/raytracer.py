@@ -1,6 +1,6 @@
 import os
 import threading
-from queue import Queue
+from Queue import Queue
 from tracer import Tracer
 from vector3 import Vector3
 
@@ -8,7 +8,7 @@ from vector3 import Vector3
 class Renderer:
     """Renderer coordinating the tracing process"""
 
-    def __init__(self, tilesize=32, threads=os.cpu_count()):
+    def __init__(self, tilesize=32, threads=2):
         """Creates a new renderer"""
         self.__tilesize = tilesize
         self.__threads = threads
@@ -98,6 +98,7 @@ class Renderer:
                     # sampled_rays = 0
                     ray = camera.calcRay(x, y, width, height)
                     ray_array.append([ray.origin, ray.direction, ray.current_ior])
+                    ray_from_array.append([x, y])
                     # for ss_x in range(-super_sampling + 1, super_sampling):
                     #     for ss_y in range(-super_sampling + 1, super_sampling):
                     #         ray = camera.calcRay(x + ss_x, y + ss_y, width, height)
@@ -105,7 +106,7 @@ class Renderer:
                     #         sampled_rays += 1
                     # rendered_tile[x, y] = sum_color * (1 / sampled_rays)
 
-            rendered_tile = tracer.trace(ray_array, scene)
+            rendered_tile = tracer.trace(ray_array, ray_from_array, scene)
             """
             :# TODO:
             """

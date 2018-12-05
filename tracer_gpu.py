@@ -5,6 +5,27 @@ from pycuda import driver, compiler, gpuarray, tools
 
 import pycuda.autoinit
 
+"""
+Ray: [ray.origin v3, ray.direction v3, ray.current_ior] len = 5
+
+Object: [
+         primitive_type=0,       [0]
+         primitive_position, v3
+         primitive_radius,       [4]
+
+         material_surface_color, v3
+         material_emission_color, v3
+         material_reflectivity,
+         material_transparency,
+         material_ior,
+         material_is_diffuse,
+         is_light])
+
+         len = 16
+
+"""
+
+
 class Tracer_gpu:
     """Main (ray) tracer coordinating the heavy algorithmic work"""
 
@@ -12,6 +33,128 @@ class Tracer_gpu:
         """Creates a new tracer"""
         self.__max_recursion_depth = max_recursion_depth
         self.__bias = bias
+
+        kernel_code = """
+        #include "math.h"
+        #include "float.h"
+
+        __device__ void normalize_vector(float *a, float *b, float *c)
+        {
+            float len;
+            float ta, tb, tc;
+
+            ta = *a;
+            tb = *b;
+            tc = *c;
+            len = ta*ta + tb*tb + tc*tc;
+
+            if(len == 0.0)
+                return;
+            len = sqrt(len);
+            *a = ta/len;
+            *b = tb/len;
+            *c = tc/len;
+        }
+
+        __device__ void intersectGPU(float *ray_array, float *scene, float *output, int *hit_obj_index, int scene_size)
+        {
+
+        /*
+        input: ray_array, scene, scene_size
+        output: [hit_point v3, hit_normal v3]
+        */
+
+            int ray_array_index = 0;
+            int output_index;
+            int i;
+            int scene_index;
+            int flag;
+            int current_obj_i = -1;
+            float l1, l2, l3;
+            float t_ca;
+            float d_squared;
+            float radius_squared;
+            float t_hc;
+            float t;
+            float hit_point1;
+            float hit_point2;
+            float hit_point3;
+            float hit_normal1;
+            float hit_normal2;
+            float hit_normal3;
+            float current_t = FLT_MAX;
+
+            for(i = 0; i < scene_size; i++){
+                flag = 0;
+                scene_index = i*16
+                if (scene[scene_index] < 0.5){ /* means sphere */
+                    /* calculate intersect */
+                    l1 = scene[scene_index+1] - ray_array[ray_array_index];
+                    l2 = scene[scene_index+2] - ray_array[ray_array_index+1];
+                    l3 = scene[scene_index+3] - ray_array[ray_array_index+2];
+                    t_ca = l1*ray_array[ray_array_index+3] +
+                           l2*ray_array[ray_array_index+4] +
+                           l3*ray_array[ray_array_index+5];
+                    if(t_ca < 0)
+                        flag = 1;
+                    d_squared = l1*l1 + l2*l2 +l3*l3 - t_ca*t_ca;
+                    radius_squared = scene[scene_index+4]*scene[scene_index+4];
+                    if(d_squared > radius_squared)
+                        flag = 1;
+                    t_hc = sqrt(radius_squared - d_squared)
+                    t = t_ca - t_hc;
+                    if(t < 0)
+                        t = t_ca + t_hc;
+                    hit_point1 = ray_array[ray_array_index] + t * ray_array[ray_array_index+3];
+                    hit_point2 = ray_array[ray_array_index+1] + t * ray_array[ray_array_index+4];
+                    hit_point3 = ray_array[ray_array_index+2] + t * ray_array[ray_array_index+5];
+                    hit_normal1 = hit_point1 + scene[scene_index+1];
+                    hit_normal2 = hit_point2 + scene[scene_index+2];
+                    hit_normal3 = hit_point3 + scene[scene_index+3];
+                    normalize_vector(&hit_normal1, &hit_normal2, &hit_normal3)
+
+                    /* intersect python code
+                    l = self.__position - ray.origin
+                    t_ca = l.dot(ray.direction)
+                    if t_ca < 0:
+                        return
+                    d_squared = l.dot(l) - t_ca ** 2
+                    radius_squared = self.__radius ** 2
+                    if d_squared > radius_squared:
+                        return
+                    t_hc = math.sqrt(radius_squared - d_squared)
+                    t = t_ca - t_hc
+                    if t < 0.0:
+                        t = t_ca + t_hc
+                    hit_point = ray.origin + t * ray.direction
+                    hit_normal = (hit_point - self.__position).normalize()
+                    return t, hit_point, hit_normal
+                    */
+
+                }
+                if(flag == 0){
+                    if(t < current_t){
+                        current_t = t;
+                        current_obj_i = i;
+                        output[0] = hit_point1;
+                        output[1] = hit_point2;
+                        output[2] = hit_point3;
+                        output[3] = hit_normal1;
+                        output[4] = hit_normal2;
+                        output[5] = hit_normal3;
+                    }
+                }
+            }
+            *hit_obj_index = current_obj_i;
+        }
+
+        __global__ void traceGPU(){
+
+        }
+
+        """
+
+
 
         """
         # TODO:
@@ -27,23 +170,23 @@ class Tracer_gpu:
         scene_gpu = []
         for obj in scene:
             primitive = obj.primitive
-            primitive_type = 0
-            primitive_position = primitive.position
-            primitive_radius = primitive.radius
+            primitive_type = 0 #0
+            primitive_position = primitive.position #123 v3
+            primitive_radius = primitive.radius #4
             material = obj.material
-            material_surface_color = material.surface_color
-            material_emission_color = material.emission_color
-            material_reflectivity = material.reflectivity
-            material_transparency = material.transparency
-            material_ior = material.ior
-            material_is_diffuse = material.is_diffuse
-            is_light = obj.is_light
+            material_surface_color = material.surface_color #567 v3
+            material_emission_color = material.emission_color #8910 v3
+            material_reflectivity = material.reflectivity #11
+            material_transparency = material.transparency #12
+            material_ior = material.ior #13
+            material_is_diffuse = material.is_diffuse #14
+            is_light = obj.is_light #15
 
-            scene_gpu.append([primitive,
+            scene_gpu.append([
                               primitive_type,
                               primitive_position,
                               primitive_radius,
-                              material,
+
                               material_surface_color,
                               material_emission_color,
                               material_reflectivity,

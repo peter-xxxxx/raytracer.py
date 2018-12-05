@@ -1,21 +1,25 @@
 import os
 import threading
-from queue import Queue
+from Queue import Queue
 from tracer import Tracer
+fromtracer_gpu import Tracer_gpu
 from vector3 import Vector3
 
 
 class Renderer:
     """Renderer coordinating the tracing process"""
 
-    def __init__(self, tilesize=32, threads=os.cpu_count()):
+    def __init__(self, tilesize=32, threads=2):
         """Creates a new renderer"""
         self.__tilesize = tilesize
         self.__threads = threads
 
-    def render(self, scene, camera, width, height, super_sampling=1, logging=True):
+    def render(self, scene, camera, width, height, super_sampling=1, logging=True, gpu=False):
         """Renders a scene"""
-        tracer = Tracer()
+        if gpu:
+            tracer = Tracer_gpu()
+        else:
+            tracer = Tracer()
         self.__tiles = Queue()
         self.__rendered_tiles = Queue()
         self.__logging = logging
@@ -92,12 +96,14 @@ class Renderer:
 
             rendered_tile = {}
             ray_array = []
+            ray_from_array = []
             for y in range(start_y, min(end_y, height)):
                 for x in range(start_x, min(end_x, width)):
                     sum_color = Vector3()
                     # sampled_rays = 0
                     ray = camera.calcRay(x, y, width, height)
                     ray_array.append([ray.origin, ray.direction, ray.current_ior])
+                    ray_from_array.append([x, y])
                     # for ss_x in range(-super_sampling + 1, super_sampling):
                     #     for ss_y in range(-super_sampling + 1, super_sampling):
                     #         ray = camera.calcRay(x + ss_x, y + ss_y, width, height)
