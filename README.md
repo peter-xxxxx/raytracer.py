@@ -4,9 +4,15 @@ This is a very easy understandable Python version ray tracing program.
 
 We used the PyCUDA to accelerate the ray tracing rendering program. Now it can finish rendering in minute.
 
-From orginal arthor:
+Prefer to run on Python 2, need to change `Queue` to `queue` to run on Python 3
 
-A basic raytracer that will render you a fancy spherific demo scene via
+`python main.py` to run CPU program
+
+`python main_gpu` to run CUDA GPU version program
+
+> From orginal arthor:
+
+> A basic raytracer that will render you a fancy spherific demo scene via
 `python3 main.py`. Guess what, it's slow! One could speed things up by using
 numpy and doing other nifty optimizations... However this project was meant to
 get to know Python - not to create a state-of-the-art-super-pathtracer - instead just
