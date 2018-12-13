@@ -67,7 +67,7 @@ camera = Camera(Vector3(), 30)
 image = renderer.render(scene, camera, width, height, super_sampling)
 
 # save ppm image
-file = open("output.ppm", "w")
+file = open("output_demo.ppm", "w")
 file.write("P3\n{0} {1}\n255\n".format(width, height))
 for y in range(height):
     for x in range(width):

@@ -15,7 +15,7 @@ class Camera:
     # to the project image plane
     def calcRay(self, x, y, width, height):
         """Calculates the ray (to be traced) at image position"""
-        aspect_ratio = width / height
+        aspect_ratio = float(width) / float(height)
         angle = math.tan(math.pi * 0.5 * self.__fov / 180)
         x_norm = (2 * ((x + 0.5) / width) - 1) * angle * aspect_ratio
         y_norm = (1 - 2 * ((y + 0.5) / height)) * angle

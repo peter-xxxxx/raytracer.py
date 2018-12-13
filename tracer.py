@@ -27,6 +27,55 @@ class Tracer:
             traced_color = self.__trace_diffuse(hit_object, hit_point, hit_normal)
         return traced_color + hit_object.material.emission_color
 
+    def intersect(self, ray, scene):
+        self.__scene = scene
+        return self.__intersect(ray)
+
+    def trace_diffuse(self, ray, scene):
+        self.__scene = scene
+        hit_object, hit_point, hit_normal = self.__intersect(ray)
+        if hit_object is None:
+            return Vector3(0.3, 0.3, 0.3)  # horizon
+        traced_color = Vector3()
+        if hit_object.material.is_diffuse:
+            traced_color = self.__trace_diffuse(hit_object, hit_point, hit_normal)
+        return traced_color
+
+    def trace_non_diffuse(self, ray, scene):
+        self.__scene = scene
+        hit_object, hit_point, hit_normal = self.__intersect(ray)
+
+        traced_color = Vector3()
+        reflection_ray = Ray(Vector3(), Vector3(), 0)
+        refraction_ray = Ray(Vector3(), Vector3(), 0)
+        fresnel = 0
+
+        if hit_object is None:
+            return reflection_ray, refraction_ray, fresnel
+
+        if not hit_object.material.is_diffuse:
+            inside = ray.direction.dot(hit_normal) > 0
+            if inside:
+                hit_normal = -hit_normal
+            facing_ratio = -ray.direction.dot(hit_normal)
+            fresnel = self.__mix((1 - facing_ratio) ** 2, 1, 0.1)
+            reflection_ray = Ray(hit_point + self.__bias * hit_normal,
+                                 ray.direction.reflect(hit_normal).normalize())
+
+            refraction = Vector3()
+
+            # transparent?
+            if hit_object.material.transparency > 0:
+                from_ior = ray.current_ior if inside else hit_object.material.ior
+                to_ior = hit_object.material.ior if inside else ray.current_ior
+                refraction_ray = Ray(hit_point - self.__bias * hit_normal,
+                                     ray.direction.refract(from_ior, to_ior, hit_normal)
+                                     .normalize())
+
+
+        # mix according to fresnel
+        return reflection_ray, refraction_ray, fresnel
+
     def __intersect(self, ray):
         """Returns the (nearest) intersection of the ray"""
         hit_object = None

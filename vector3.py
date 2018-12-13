@@ -10,6 +10,18 @@ class Vector3:
         self.__y = y
         self.__z = z
 
+    @property
+    def x(self):
+        return float(self.__x)
+
+    @property
+    def y(self):
+        return float(self.__y)
+
+    @property
+    def z(self):
+        return float(self.__z)
+
     def __str__(self):
         """Returns a string representation of the vector"""
         return "Vector3({0}, {1}, {2})".format(self.__x, self.__y, self.__z)
