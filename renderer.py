@@ -1,6 +1,6 @@
 import os
 import threading
-from queue import Queue
+from Queue import Queue
 from tracer import Tracer
 from vector3 import Vector3
 
