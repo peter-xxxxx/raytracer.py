@@ -77,4 +77,4 @@ class Renderer:
             if self.__logging:
                 finished = self.__rendered_tiles.qsize()
                 print("{0}/{1} tiles | {2:.2f}%".format(finished, self.__total_tiles,
-                                                        finished / self.__total_tiles * 100.0))
+                                                        float(finished) / float(self.__total_tiles) * 100.0))

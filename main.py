@@ -9,6 +9,7 @@ from sphere import Sphere
 from renderer import Renderer
 from renderobject import RenderObject
 from vector3 import Vector3
+import time
 
 # render settings
 width = 640
@@ -64,7 +65,12 @@ scene = [ground_obj, light_obj, light2_obj, blue_light_obj, obj1, obj2, obj3, ob
 # render
 renderer = Renderer(tilesize=64)
 camera = Camera(Vector3(), 30)
+
+start = time.time()
 image = renderer.render(scene, camera, width, height, super_sampling)
+end = time.time()
+
+print("cost ", end-start, " time to run")
 
 # save ppm image
 file = open("output_demo.ppm", "w")

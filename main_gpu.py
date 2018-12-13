@@ -1,10 +1,15 @@
-# GPU Version of Ray Trancing Rendering
+# raytracer.py - basic Python raytracer
+# Micha Hanselmann, 2017
+# Peter Xu, 2018
+# based on http://www.scratchapixel.com/lessons/3d-basic-rendering/introduction-to-ray-tracing
+
 from camera import Camera
 from material import Material
 from sphere import Sphere
-from renderer_gpu import Renderer
+from renderer_gpu import Renderer_gpu
 from renderobject import RenderObject
 from vector3 import Vector3
+import time
 
 # render settings
 width = 640
@@ -56,16 +61,29 @@ sph4 = Sphere(Vector3(0, 0, 60), 8)
 obj4 = RenderObject(sph4, mat4)
 
 scene = [ground_obj, light_obj, light2_obj, blue_light_obj, obj1, obj2, obj3, obj4]
-#
-# # render
-# renderer = Renderer(tilesize=64)
-# camera = Camera(Vector3(), 30)
-# image = renderer.render(scene, camera, width, height, super_sampling)
-#
-# # save ppm image
-# file = open("output.ppm", "w")
-# file.write("P3\n{0} {1}\n255\n".format(width, height))
-# for y in range(height):
-#     for x in range(width):
-#         file.write("{0} {1} {2} ".format(*image[x, y].to_rgb_color()))
-# file.close()
+
+# render
+renderer = Renderer_gpu()
+camera = Camera(Vector3(), 30)
+
+start = time.time()
+rendered = renderer.render(scene, camera, width, height)
+end = time.time()
+
+print("cost ", end-start, " time to run")
+
+image = rendered
+
+def to_rgb_color(x, y, image):
+        """Converts the vector into RGB values"""
+        r = max(0, min(1, image[x+y*width, 0])) * 255
+        g = max(0, min(1, image[x+y*width, 1])) * 255
+        b = max(0, min(1, image[x+y*width, 2])) * 255
+        return int(r), int(g), int(b)
+
+file = open("output_gpu.ppm", "w")
+file.write("P3\n{0} {1}\n255\n".format(width, height))
+for y in range(height):
+    for x in range(width):
+        file.write("{0} {1} {2} ".format(*to_rgb_color(x,y,image)))
+file.close()

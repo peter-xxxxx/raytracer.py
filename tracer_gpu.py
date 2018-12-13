@@ -565,12 +565,10 @@ class Tracer_gpu:
 
     def trace_gpu(self, ray_array):
         """
-        : # TODO:
 
         recursive -> iterative
 
         every depth, call gpu func
-
 
         """
 
@@ -578,8 +576,8 @@ class Tracer_gpu:
 
         ray_array_cpu = np.array(ray_array, np.float32)
         scene_cpu = np.array(self.__scene_gpu, np.float32)
-        print ray_array_cpu.shape
-        print scene_cpu.shape
+        print(ray_array_cpu.shape)
+        print(scene_cpu.shape)
 
         scene_size = np.int32(scene_cpu.shape[0])
 
@@ -714,6 +712,3 @@ class Tracer_gpu:
                     obj_index_n.append(obj_index[i])
 
         return ray_n, [index_n, fresnel_n, obj_index_n]
-
-
-    
