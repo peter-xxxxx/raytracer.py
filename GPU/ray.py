@@ -1,11 +1,11 @@
 class Ray:
     """Ray (/half-line) class"""
 
-    def __init__(self, origin, direction, ior=1.0):
+    def __init__(self, origin, direction):
         """Creates a new ray"""
         self.__origin = origin
         self.__direction = direction
-        self.__current_ior = ior
+        self.__current_ior = 1.0
 
     @property
     def origin(self):
@@ -22,7 +22,3 @@ class Ray:
         """Returns the current index of refraction of the ray"""
         """For a ray in vacuum the ior is 1, the constant n in physics"""
         return self.__current_ior
-
-    @property
-    def to_list(self):
-        return [self.__origin, self.__direction, self.__current_ior]
