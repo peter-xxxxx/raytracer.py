@@ -1,5 +1,11 @@
 ## raytracer.py
 
+This is a very easy understandable Python version ray tracing program.
+
+We used the PyCUDA to accelerate the ray tracing rendering program. Now it can finish rendering in minute.
+
+From orginal arthor:
+
 A basic raytracer that will render you a fancy spherific demo scene via
 `python3 main.py`. Guess what, it's slow! One could speed things up by using
 numpy and doing other nifty optimizations... However this project was meant to
