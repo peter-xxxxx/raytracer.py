@@ -2,7 +2,7 @@
 
 This is a very easy understandable Python version ray tracing program code by DeerMichel.
 
-We used the PyCUDA to accelerate the ray tracing rendering program as our heterogeneous computing course. Now it can finish rendering in minute. Works on tesseract server, too.
+We used the PyCUDA to accelerate the ray tracing rendering program as our heterogeneous computing course project. Now it can finish rendering in minute. Works on tesseract server, too.
 
 Prefer to run on Python 2, need to change `Queue` to `queue` to run on Python 3
 
