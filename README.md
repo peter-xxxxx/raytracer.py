@@ -1,14 +1,16 @@
 ## raytracer.py
 
-This is a very easy understandable Python version ray tracing program.
+This is a very easy understandable Python version ray tracing program code by DeerMichel.
 
-We used the PyCUDA to accelerate the ray tracing rendering program. Now it can finish rendering in minute.
+We used the PyCUDA to accelerate the ray tracing rendering program as our heterogeneous computing course. Now it can finish rendering in minute. Works on tesseract server, too.
 
 Prefer to run on Python 2, need to change `Queue` to `queue` to run on Python 3
 
 `python main.py` to run CPU program
 
-`python main_gpu` to run CUDA GPU version program
+`python main_gpu.py` to run CUDA GPU version program
+
+The output is a PPM format image file.
 
 > From orginal arthor:
 
