@@ -74,6 +74,7 @@ print("cost ", end-start, " time to run")
 
 image = rendered
 
+# write image file
 def to_rgb_color(x, y, image):
         """Converts the vector into RGB values"""
         r = max(0, min(1, image[x+y*width, 0])) * 255

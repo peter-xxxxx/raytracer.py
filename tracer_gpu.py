@@ -6,20 +6,23 @@ from pycuda import driver, compiler, gpuarray, tools
 import pycuda.autoinit
 
 """
-Ray: [ray.origin v3, ray.direction v3, ray.current_ior] len = 7
+Ray and Object data are sorted like this:
+
+Ray: [ray.origin v3, ray.direction v3, ray.current_ior]
+len = 7
 
 Object: [
          primitive_type=0,       [0]
          primitive_position, v3
          primitive_radius,       [4]
-
          material_surface_color, v3 [5-7]
          material_emission_color, v3 [8-10]
          material_reflectivity, [11]
          material_transparency,
          material_ior,
          material_is_diffuse,
-         is_light])
+         is_light
+         ]
 
          len = 16
 
@@ -27,13 +30,20 @@ Object: [
 
 
 class Tracer_gpu:
-    """Main (ray) tracer coordinating the heavy algorithmic work"""
+    """
+    : Main (ray) tracer coordinating the heavy algorithmic work
+    : use CUDA to accelerate
+    """
 
     def __init__(self, max_recursion_depth=5, bias=1e-4):
-        """Creates a new tracer"""
+        """
+        : Creates a new tracer
+        : compile CUDA kernel code
+        """
         self.__max_recursion_depth = max_recursion_depth
         self.__bias = bias
 
+        # parallel intersect
         kernel_code_intersect = """
         #include "math.h"
         #include "float.h"
@@ -183,6 +193,7 @@ class Tracer_gpu:
 
         self.kernel_fun_intersect = self.mod.get_function("intersectKernel")
 
+        # parallel trace diffuse
         kernel_code_trace_diffuse = """
         #include "math.h"
         #include "float.h"
@@ -324,6 +335,7 @@ class Tracer_gpu:
 
         self.kernel_fun_trace_diffuse = self.mod.get_function("traceDiffuseKernel")
 
+        # parallel trace non diffuse
         kernel_code_trace_non_diffuse = """
         #include "math.h"
         #include "float.h"
@@ -456,7 +468,7 @@ class Tracer_gpu:
 
         self.kernel_fun_trace_non_diffuse = self.mod.get_function("traceNonDiffuseKernel")
 
-
+        # parallel process stack (backtrack)
         kernel_code_process_stack = """
         #include "math.h"
         #include "float.h"
@@ -518,7 +530,10 @@ class Tracer_gpu:
 
 
     def trace(self, ray_array, ray_from_array, scene):
-        """Traces a ray through a scene to return the traced color"""
+        """
+        : Traces by ray array through a scene to return the traced color
+        : CUDA accelerate
+        """
         self.__scene = scene
         self.__ray_from_array = ray_from_array
         self.__scene_gpu = self.scene_to_gpu(scene)
@@ -526,6 +541,10 @@ class Tracer_gpu:
         return self.trace_gpu(ray_array)
 
     def scene_to_gpu(self, scene):
+        """
+        : unzip Object class object to a float array
+        : better for GPU to process
+        """
         scene_gpu = []
         for obj in scene:
             primitive = obj.primitive
@@ -565,11 +584,13 @@ class Tracer_gpu:
 
     def trace_gpu(self, ray_array):
         """
+        Core method to do ray tracing
 
-        recursive -> iterative
+        change CPU recursive version -> GPU iterative version
 
-        every depth, call gpu func
+        for every depth, call gpu functions
 
+        Then do stack process to get final result
         """
 
         stack = []
@@ -581,7 +602,7 @@ class Tracer_gpu:
 
         scene_size = np.int32(scene_cpu.shape[0])
 
-
+        # loop for every depth
         for i in range(self.__max_recursion_depth):
             num_ray = np.int32(ray_array_cpu.shape[0])
 
@@ -594,6 +615,7 @@ class Tracer_gpu:
             output_obj_index_gpu = gpuarray.empty((num_ray, 1), np.int32)
             output_color = gpuarray.empty((num_ray, 3), np.float32)
 
+            # call parallel intersect function
             self.kernel_fun_intersect(ray_array_gpu, scene_gpu, num_ray, scene_size, output_intersect_gpu, output_obj_index_gpu,
                                       block = (num_thread, 1, 1),
                                       grid = (num_block, 1, 1))
@@ -604,11 +626,14 @@ class Tracer_gpu:
             intersect_gpu = gpuarray.to_gpu(intersect_cpu)
             obj_index_gpu = gpuarray.to_gpu(obj_index_cpu)
 
+            # the final depth will treat every objects as diffuse one
+            # flag here is used to control this
             if i == self.__max_recursion_depth-1:
                 flag = np.int32(1)
             else:
                 flag = np.int32(0)
 
+            # trace diffuse
             self.kernel_fun_trace_diffuse(intersect_gpu,
                                           obj_index_gpu,
                                           num_ray, scene_gpu, scene_size, flag,
@@ -628,6 +653,7 @@ class Tracer_gpu:
             output_refract_ray_gpu = gpuarray.empty((num_ray, 7), np.float32)
             output_fresnel_gpu = gpuarray.empty((num_ray, 1), np.float32)
 
+            # trace non diffuse
             self.kernel_fun_trace_non_diffuse(ray_array_gpu,
                                               intersect_gpu,
                                               obj_index_gpu,
@@ -642,6 +668,7 @@ class Tracer_gpu:
             refract_ray_cpu = output_refract_ray_gpu.get()
             fresnel_cpu = output_fresnel_gpu.get()
 
+            # prepare for next depth interation
             ray_array_cpu_next, to_stack = self.ray_batch_filter(reflect_ray_cpu,
                                                                  refract_ray_cpu,
                                                                  fresnel_cpu,
@@ -659,6 +686,10 @@ class Tracer_gpu:
         return color
 
     def process_stack(self, stack, scene_gpu):
+        """
+        : process stack to get final result
+        """
+
         num_thread = 256
         color_cpu = np.array(stack[len(stack)-1][0], np.float32)
 
@@ -693,8 +724,11 @@ class Tracer_gpu:
         return color_cpu
 
 
-
     def ray_batch_filter(self, reflect_ray, refract_ray, fresnel, obj_index):
+        """
+        : prepare for next batch
+        : return: [ray], [to stack]
+        """
         index_n = []
         ray_n = []
         fresnel_n = []

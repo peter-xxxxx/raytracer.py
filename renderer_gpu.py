@@ -7,7 +7,10 @@ from vector3 import Vector3
 
 
 class Renderer_gpu:
-    """Renderer coordinating the tracing process"""
+    """
+    : Renderer coordinating the tracing process
+    : GPU version
+    """
 
     def __init__(self, tilesize=32, threads=2):
         """Creates a new renderer"""
@@ -20,17 +23,17 @@ class Renderer_gpu:
 
         ray_array = []
         ray_from_array = []
-
+        # generate ray array
         for y in range(0, height):
             for x in range(0, width):
                 sum_color = Vector3()
-
+                # calculate ray using Camera class
                 ray = camera.calcRay(x, y, width, height)
-
+                # put ray into an array for further processing
                 ray_array.append([ray.origin.x, ray.origin.y, ray.origin.z,
                                   ray.direction.x, ray.direction.y, ray.direction.z, ray.current_ior])
                 ray_from_array.append([x, y])
-
+        # call GPU tracer
         rendered = tracer.trace(ray_array, ray_from_array, scene)
 
         return rendered
